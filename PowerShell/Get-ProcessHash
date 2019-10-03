@@ -1,0 +1,24 @@
+function Get-ProcessHash ($name="*" , $Algorithm = "MD5", $virustotal = "False") {
+$ErrorActionPreference = "SilentlyContinue"
+
+$process = get-process "$name" | select -Property Name,Path -Unique
+$File = $process | %{get-filehash -Algorithm $Algorithm -path ($_.Path) | select -Unique} | select -Property Hash,Path
+
+if ($virustotal -like "true" -or "y" -or "yes"){
+#Currently a work in progress...
+#Replace <apikey> with your apikey
+$apikey = "40abbdbb3a05d071073121fbfb1a16e8c064b9e923937c7fb4b7891f0c6c4576"
+$query =  "$File.hash"
+Invoke-WebRequest -Uri "https://www.virustotal.com/vtapi/v2/file/report?apikey="$apikey"&query="$query""
+}
+
+$result = New-Object PSObject
+$result | Add-Member -MemberType NoteProperty -Name Process -Value $process.Name
+$result | Add-Member -MemberType NoteProperty -Name Hash -Value $File.Hash
+$result | Add-Member -MemberType NoteProperty -Name Path -Value $File.Path
+
+$result | Select-Object Process, Hash, Path
+
+
+}
+
